@@ -81,20 +81,22 @@ def charger_eeg(fichier):
 
 # --- AFFICHAGE 3D DU CERVEAU + RESEAU NEURONAL ---
 def afficher_modele_threejs():
-    try:
-        with open("assets/3dbrain_embed.html", "r") as f:
+    file_path = "assets/3dbrain_embed.html"
+    if os.path.exists(file_path):
+        with open(file_path, "r") as f:
             brain_html = f.read()
         html(brain_html, height=600, scrolling=False)
-    except:
-        st.warning("Fichier '3dbrain_embed.html' manquant dans le dossier assets.")
+    else:
+        st.error(f"Fichier '{file_path}' introuvable. Assurez-vous qu'il est bien présent dans le dossier 'assets'.")
 
 def afficher_reseau_neuronal():
-    try:
-        with open("assets/neural_overlay.html", "r") as f:
+    file_path = "assets/neural_overlay.html"
+    if os.path.exists(file_path):
+        with open(file_path, "r") as f:
             neuron_html = f.read()
         html(neuron_html, height=600, scrolling=False)
-    except:
-        st.warning("Fichier 'neural_overlay.html' manquant dans le dossier assets.")
+    else:
+        st.error(f"Fichier '{file_path}' introuvable. Assurez-vous qu'il est bien présent dans le dossier 'assets'.")
 
 # --- INTERFACE PRINCIPALE ---
 st.markdown("""
