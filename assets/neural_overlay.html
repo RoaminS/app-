@@ -1,54 +1,78 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
-	<title>Neural Network Prototype v0.1</title>
-	<link rel="stylesheet" href="css/app.css"/>
-	<!-- Google Tag Manager -->
-	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-	})(window,document,'script','dataLayer','GTM-N32X6CM');</script>
-	<!-- End Google Tag Manager -->
-	<!-- Facebook Pixel Code -->
-	<script>
-	!function(f,b,e,v,n,t,s)
-	{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-	n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-	if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-	n.queue=[];t=b.createElement(e);t.async=!0;
-	t.src=v;s=b.getElementsByTagName(e)[0];
-	s.parentNode.insertBefore(t,s)}(window, document,'script',
-	'https://connect.facebook.net/en_US/fbevents.js');
-	fbq('init', '1292114434137412');
-	fbq('track', 'PageView');
-	</script>
-	<noscript><img height="1" width="1" style="display:none"
-	src="https://www.facebook.com/tr?id=1292114434137412&ev=PageView&noscript=1"
-	/></noscript>
-	<!-- End Facebook Pixel Code -->
-	<!-- Google Tag Manager (noscript) -->
-	<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N32X6CM"
-	height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-	<!-- End Google Tag Manager (noscript) -->
+  <meta charset="UTF-8" />
+  <title>Neural Network Overlay</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: transparent;
+      overflow: hidden;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 10;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-	  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N32X6CM" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <script>
+    let scene, camera, renderer, neurons = [];
 
-	<div id="loading">
-		<div class="spinner">
-			<div class="rect1"></div>
-			<div class="rect2"></div>
-			<div class="rect3"></div>
-			<div class="rect4"></div>
-			<div class="rect5"></div>
-		</div>
-	</div>
+    function createNeuron(x, y, z) {
+      const geometry = new THREE.SphereGeometry(0.015, 16, 16);
+      const material = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+      const sphere = new THREE.Mesh(geometry, material);
+      sphere.position.set(x, y, z);
+      scene.add(sphere);
+      return sphere;
+    }
 
-	<div id="canvas-container"></div>
+    function createConnection(a, b) {
+      const material = new THREE.LineBasicMaterial({ color: 0x00ffff });
+      const points = [a.position.clone(), b.position.clone()];
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+    }
 
-	<script src="js/vendor/vendor-merge.js"></script>
-	<script src="js/build/app.js"></script>
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.z = 3;
+
+      renderer = new THREE.WebGLRenderer({ alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // Générer un réseau de neurones aléatoires
+      for (let i = 0; i < 20; i++) {
+        const n = createNeuron(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+        neurons.push(n);
+      }
+
+      // Connexions
+      for (let i = 0; i < neurons.length; i++) {
+        for (let j = i + 1; j < neurons.length; j++) {
+          if (Math.random() < 0.15) createConnection(neurons[i], neurons[j]);
+        }
+      }
+
+      animate();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      neurons.forEach(n => {
+        n.material.color.setHSL((performance.now() / 1000 + n.position.x) % 1, 1, 0.5);
+      });
+      renderer.render(scene, camera);
+    }
+
+    init();
+  </script>
 </body>
 </html>
