@@ -1,0 +1,7 @@
+streamlit
+pyvista
+mne
+plotly
+numpy
+scipy
+streamlit-vtkjs
