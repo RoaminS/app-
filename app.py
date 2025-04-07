@@ -4,7 +4,6 @@ import numpy as np
 import time
 import os
 import mne
-from streamlit_vtkjs import st_vtkjs
 from streamlit.components.v1 import html
 
 # --- CONFIGURATION GÉNÉRALE ---
@@ -80,11 +79,22 @@ def charger_eeg(fichier):
         return None
     return raw
 
-# --- AFFICHAGE 3D DU CERVEAU ---
-def afficher_modele_vtk(path):
-    with open(path, "r") as f:
-        vtk_data = f.read()
-    st_vtkjs(vtk_data, height=500)
+# --- AFFICHAGE 3D DU CERVEAU + RESEAU NEURONAL ---
+def afficher_modele_threejs():
+    try:
+        with open("assets/3dbrain_embed.html", "r") as f:
+            brain_html = f.read()
+        html(brain_html, height=600, scrolling=False)
+    except:
+        st.warning("Fichier '3dbrain_embed.html' manquant dans le dossier assets.")
+
+def afficher_reseau_neuronal():
+    try:
+        with open("assets/neural_overlay.html", "r") as f:
+            neuron_html = f.read()
+        html(neuron_html, height=600, scrolling=False)
+    except:
+        st.warning("Fichier 'neural_overlay.html' manquant dans le dossier assets.")
 
 # --- INTERFACE PRINCIPALE ---
 st.markdown("""
@@ -94,8 +104,9 @@ st.markdown("""
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.markdown("<h4 style='text-align:center;'>Cerveau 3D Interactif</h4>", unsafe_allow_html=True)
-    afficher_modele_vtk("assets/brain_model.vtk")
+    st.markdown("<h4 style='text-align:center;'>Cerveau 3D Interactif + Réseau Neuronal</h4>", unsafe_allow_html=True)
+    afficher_modele_threejs()
+    afficher_reseau_neuronal()
     st.markdown("""
     <div style='text-align: center;'>
         <button class="button">📂 Import EEG</button>
@@ -116,7 +127,6 @@ if fichier_eeg:
         fig.update_layout(title='Signaux EEG (premières secondes)', template="plotly_dark", height=400)
         st.plotly_chart(fig, use_container_width=True)
 
-        # --- Mapping bande EEG vers zone ---
         psds, freqs = mne.time_frequency.psd_welch(raw, fmin=1, fmax=50, n_fft=256)
         bande_dominante = freqs[np.argmax(psds.mean(axis=1))]
         if bande_dominante < 4:
@@ -134,7 +144,7 @@ if fichier_eeg:
 
 # --- MODE DÉMO ---
 if st.button("🎬 Mode Démo"):
-    fichier_demo = os.path.join(os.path.dirname(__file__), "demo_data/demo_eeg.edf")
+    fichier_demo = os.path.join("demo_data", "demo_eeg.edf")
     if os.path.exists(fichier_demo):
         raw = mne.io.read_raw_edf(fichier_demo, preload=True)
         st.success("Mode démo activé. Données EEG chargées.")
