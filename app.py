@@ -1,12 +1,11 @@
 import streamlit as st
-import pyvista as pv
-from pyvista import examples
 import plotly.graph_objs as go
 import numpy as np
 import time
 import os
 import mne
 from streamlit_vtkjs import st_vtkjs
+from streamlit.components.v1 import html
 
 # --- CONFIGURATION GÉNÉRALE ---
 st.set_page_config(page_title="🧠 Visualiseur EEG 3D", layout="wide", page_icon="🧠")
@@ -16,6 +15,7 @@ st.markdown("""
     body {
         background-color: #0a0a0a;
         color: #ffffff;
+        font-family: 'Orbitron', sans-serif;
     }
     .stButton>button {
         background-color: #1f1f2e;
@@ -23,6 +23,7 @@ st.markdown("""
         border-radius: 12px;
         border: none;
         transition: 0.3s;
+        font-size: 18px;
     }
     .stButton>button:hover {
         background-color: #292945;
@@ -31,8 +32,35 @@ st.markdown("""
     .block-container {
         padding-top: 2rem;
     }
+    .neon-box {
+        border: 2px solid #ff66cc;
+        padding: 1rem;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 0 10px #ff66cc;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
 </style>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
 """, unsafe_allow_html=True)
+
+# --- ANIMATION HUD & PARTICULES ---
+html("""
+<div style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0;">
+  <svg width="100%" height="100%">
+    <defs>
+      <radialGradient id="pulse" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#ff66cc" stop-opacity="0.8">
+          <animate attributeName="stop-opacity" values="0.2;0.8;0.2" dur="3s" repeatCount="indefinite" />
+        </stop>
+        <stop offset="100%" stop-color="#0a0a0a" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+    <circle cx="50%" cy="50%" r="20%" fill="url(#pulse)" />
+  </svg>
+</div>
+""", height=0)
 
 # --- FONCTION POUR CHARGER EEG ---
 def charger_eeg(fichier):
@@ -52,21 +80,11 @@ def charger_eeg(fichier):
         return None
     return raw
 
-# --- MODÈLE CERVEAU + ZONES ACTIVÉES ---
-@st.cache_resource
-def get_brain():
-    brain = examples.download_brain()
-    return brain
-
-@st.cache_resource
-def get_plotter():
-    plotter = pv.Plotter(off_screen=True, window_size=[800, 600])
-    brain = get_brain()
-    brain.compute_normals(cell_normals=False)
-    plotter.add_mesh(brain, color='deepskyblue', opacity=0.5, smooth_shading=True, specular=1.0, specular_power=20)
-    plotter.enable_eye_dome_lighting()
-    plotter.set_background('black')
-    return plotter
+# --- AFFICHAGE 3D DU CERVEAU ---
+def afficher_modele_vtk(path):
+    with open(path, "r") as f:
+        vtk_data = f.read()
+    st_vtkjs(vtk_data, height=500)
 
 # --- INTERFACE PRINCIPALE ---
 st.markdown("""
@@ -76,11 +94,14 @@ st.markdown("""
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.image(get_plotter().screenshot(), caption="Modèle cérébral interactif", use_column_width=True)
-    st.markdown("""<div style='text-align: center;'>
-    <button class="button">📂 Import EEG</button>
-    <button class="button">🔴 Live EEG</button>
-    </form></div>""", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align:center;'>Cerveau 3D Interactif</h4>", unsafe_allow_html=True)
+    afficher_modele_vtk("assets/brain_model.vtk")
+    st.markdown("""
+    <div style='text-align: center;'>
+        <button class="button">📂 Import EEG</button>
+        <button class="button">🔴 Live EEG</button>
+    </div>
+    """, unsafe_allow_html=True)
 
 # --- IMPORT EEG ---
 fichier_eeg = st.file_uploader("Choisissez un fichier EEG", type=["edf", "csv", "mat"])
